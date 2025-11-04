@@ -1,0 +1,7 @@
+[
+  { "id": "P001", "nombre": "Manzana Fuji 1Kg", "precio": 1590, "imagenUrl": "", "categoria": "Frutas",  "stock": 30 },
+  { "id": "P002", "nombre": "Palta Hass 1Kg",   "precio": 3990, "imagenUrl": "", "categoria": "Frutas",  "stock": 18 },
+  { "id": "P003", "nombre": "Lechuga Hidropónica", "precio": 990, "imagenUrl": "", "categoria": "Verduras","stock": 22 },
+  { "id": "P004", "nombre": "Zanahoria 1Kg",    "precio": 1190, "imagenUrl": "", "categoria": "Verduras","stock": 40 },
+  { "id": "P005", "nombre": "Quínoa Orgánica 500g","precio": 3490,"imagenUrl": "", "categoria": "Cereales","stock": 15 }
+]

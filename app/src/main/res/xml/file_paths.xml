@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Guardaremos fotos temporales aquí -->
+    <cache-path name="images" path="images/"/>
+</paths>

@@ -2,8 +2,24 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- 👇 AÑADIDO: Permiso de cámara -->
+    <!-- 📍 Permisos de ubicación -->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- 📷 Permiso de cámara (función nativa) -->
     <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- 🌐 Internet (necesario para Mapbox y API REST) -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+
+    <!-- Permiso necesario para hacer peticiones HTTP -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:allowBackup="true"
@@ -13,8 +29,17 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.ProyectoLogin006D">
+        android:theme="@style/Theme.ProyectoLogin006D"
+        tools:targetApi="31">
 
+        <!-- ❌ Google Maps: ELIMINADO -->
+        <!--
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="@string/google_maps_key" />
+        -->
+
+        <!-- 🏁 Actividad principal -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -26,7 +51,9 @@
             </intent-filter>
         </activity>
 
-        <!-- 👇 AÑADIDO: FileProvider para TakePicture() -->
+
+
+        <!-- 📁 FileProvider para fotos (cámara / galería) -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

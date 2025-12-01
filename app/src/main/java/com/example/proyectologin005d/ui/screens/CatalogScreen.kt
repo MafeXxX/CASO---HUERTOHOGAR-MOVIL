@@ -1,6 +1,7 @@
 package com.example.proyectologin005d.ui.screens
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,8 +22,10 @@ import com.example.proyectologin005d.R
 import com.example.proyectologin005d.data.FakeCatalog
 import com.example.proyectologin005d.data.model.Producto
 
+// CATALOGO MODIFICADO
+
 @Composable
-fun CatalogScreen() {
+fun CatalogScreen(onProductClick: (String) -> Unit) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier.fillMaxSize(),
@@ -32,14 +35,27 @@ fun CatalogScreen() {
             items = FakeCatalog.items,
             key = { it.id }
         ) { p ->
-            ProductCard(p, modifier = Modifier.padding(8.dp))
+            ProductCard(
+                p,
+                modifier = Modifier.padding(8.dp),
+                onClick = { onProductClick(p.id) }   // << AQUI SE ENVÍA EL ID
+            )
         }
     }
 }
 
+
+
+// PRODUCTO MODIFICADO PARA INGRESAR A DETALLE PRODUCTO
 @Composable
-private fun ProductCard(p: Producto, modifier: Modifier = Modifier) {
-    Card(modifier = modifier) {
+private fun ProductCard(
+    p: Producto,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier.clickable { onClick() }  // << AHORA SE PUEDE CLICKEAR
+    ) {
         val imgRes = if (p.imageRes != 0) p.imageRes else R.drawable.logo_huerto
 
         Image(
@@ -50,11 +66,15 @@ private fun ProductCard(p: Producto, modifier: Modifier = Modifier) {
                 .height(140.dp),
             contentScale = ContentScale.Crop
         )
+
         Column(Modifier.padding(12.dp)) {
             Text(p.nombre, style = MaterialTheme.typography.titleMedium)
             Text(formatoCLP(p.precio), style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
+
+
+
 
 private fun formatoCLP(n: Int) = "$" + "%,d".format(n).replace(',', '.')

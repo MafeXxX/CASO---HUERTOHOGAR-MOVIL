@@ -10,7 +10,7 @@ data class Producto(
     val precio: Int,
     val imagenUrl: String? = null,
     val categoria: String? = null,
-    val stock: Int = 0,
+    var stock: Int = 0,
     // Opción A: id de recurso de drawable
     val imageRes: Int = 0
 )

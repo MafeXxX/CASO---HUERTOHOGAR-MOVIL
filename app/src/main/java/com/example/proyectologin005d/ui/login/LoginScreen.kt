@@ -1,153 +1,217 @@
-// app/src/main/java/com/example/proyectologin005d/ui/login/LoginScreen.kt
-package com.example.proyectologin005d.ui.login
+package com.example.proyectologin005d.login
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.proyectologin005d.R
 import com.example.proyectologin005d.data.SessionManager
+import com.example.proyectologin005d.data.UserRepository
+import com.example.proyectologin005d.ui.login.LoginColors
+import com.example.proyectologin005d.ui.login.LoginDefaults
 import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
-    onLoginSuccess: () -> Unit = {},
-    viewModel: LoginViewModel = viewModel(),
-    // Usa tu paleta: fija de marca o tomada del MaterialTheme
-    colors: LoginColors = LoginDefaults.brand()
-    // Si prefieres el theme del sistema, usa: colors = LoginDefaults.fromTheme()
+    onLoginSuccess: () -> Unit,
+    onGoToRegister: () -> Unit,
+    colors: LoginColors? = null
 ) {
-    val ui = viewModel.uiState
-    var passwordVisible by remember { mutableStateOf(false) }
+    val palette = colors ?: LoginDefaults.fromTheme()
 
-    // Necesitamos contexto y scope para guardar el email (suspend)
     val context = LocalContext.current
+    val repo = remember { UserRepository(context) }
+    val sessionManager = remember { SessionManager(context) }
     val scope = rememberCoroutineScope()
 
-    Surface(modifier = Modifier.fillMaxSize(), color = colors.background) {
+    var email by remember { mutableStateOf("") }
+    var pass by remember { mutableStateOf("") }
+    var emailError by remember { mutableStateOf<String?>(null) }
+    var passError by remember { mutableStateOf<String?>(null) }
+    var generalError by remember { mutableStateOf<String?>(null) }
+    var isLoading by remember { mutableStateOf(false) }
+    var showPass by remember { mutableStateOf(false) }
+
+    val scrollState = rememberScrollState()
+
+    Surface(Modifier.fillMaxSize(), color = palette.background) {
         Column(
-            modifier = Modifier
+            Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(24.dp)
+                .verticalScroll(scrollState),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            Spacer(Modifier.height(48.dp))
+            val logoPainter =
+                runCatching { painterResource(id = R.drawable.logo_huerto) }.getOrNull()
+                    ?: runCatching { painterResource(id = R.mipmap.ic_launcher_round) }.getOrNull()
+                    ?: runCatching { painterResource(id = R.mipmap.ic_launcher) }.getOrNull()
 
-            // Logo
-            Image(
-                painter = painterResource(id = R.drawable.logo_huerto),
-                contentDescription = "Logo Huerto Hogar",
-                modifier = Modifier.size(96.dp)
-            )
-
-            Spacer(Modifier.height(24.dp))
+            if (logoPainter != null) {
+                Image(
+                    painter = logoPainter,
+                    contentDescription = "Logo Huerto Hogar",
+                    modifier = Modifier
+                        .size(96.dp)
+                        .padding(bottom = 12.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
 
             Text(
                 "Bienvenido a Huerto Hogar",
                 style = MaterialTheme.typography.headlineMedium,
-                color = colors.title
+                color = palette.title
             )
 
             Spacer(Modifier.height(24.dp))
 
-            // Correo
             OutlinedTextField(
-                value = ui.username,
-                onValueChange = { viewModel.onUsernameChange(it) },
-                label = { Text("Correo") },
+                value = email,
+                onValueChange = {
+                    email = it
+                    emailError = null
+                    generalError = null
+                },
+                label = { Text("Correo", color = palette.fieldLabel) },
+                isError = emailError != null,
+                supportingText = {
+                    if (emailError != null)
+                        Text(emailError!!, color = palette.error)
+                },
                 singleLine = true,
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next
+                ),
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !ui.isLoading,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = colors.fieldText,
-                    unfocusedTextColor = colors.fieldText,
-                    focusedLabelColor = colors.fieldLabel,
-                    unfocusedLabelColor = colors.fieldLabel,
-                    focusedBorderColor = colors.fieldBorder,
-                    unfocusedBorderColor = colors.fieldBorder,
-                    cursorColor = colors.fieldText,
-                    focusedContainerColor = colors.fieldContainer,
-                    unfocusedContainerColor = colors.fieldContainer,
-                    errorBorderColor = colors.error,
-                    errorLabelColor = colors.error
+                    focusedContainerColor = palette.fieldContainer,
+                    unfocusedContainerColor = palette.fieldContainer,
+                    focusedTextColor = palette.fieldText,
+                    unfocusedTextColor = palette.fieldText,
+                    focusedBorderColor = palette.fieldBorder,
+                    unfocusedBorderColor = palette.fieldBorder,
+                    cursorColor = palette.fieldText
                 )
             )
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(8.dp))
 
-            // Contraseña
             OutlinedTextField(
-                value = ui.password,
-                onValueChange = { viewModel.onPasswordChange(it) },
-                label = { Text("Contraseña") },
+                value = pass,
+                onValueChange = {
+                    pass = it
+                    passError = null
+                    generalError = null
+                },
+                label = { Text("Contraseña", color = palette.fieldLabel) },
+                isError = passError != null,
+                supportingText = {
+                    if (passError != null)
+                        Text(passError!!, color = palette.error)
+                },
                 singleLine = true,
-                visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                visualTransformation = if (showPass)
+                    androidx.compose.ui.text.input.VisualTransformation.None
+                else PasswordVisualTransformation(),
                 trailingIcon = {
-                    TextButton(onClick = { passwordVisible = !passwordVisible }) {
-                        Text(if (passwordVisible) "Ocultar" else "Ver")
+                    TextButton(onClick = { showPass = !showPass }) {
+                        Text(if (showPass) "Ocultar" else "Ver")
                     }
                 },
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !ui.isLoading,
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = colors.fieldText,
-                    unfocusedTextColor = colors.fieldText,
-                    focusedLabelColor = colors.fieldLabel,
-                    unfocusedLabelColor = colors.fieldLabel,
-                    focusedBorderColor = colors.fieldBorder,
-                    unfocusedBorderColor = colors.fieldBorder,
-                    cursorColor = colors.fieldText,
-                    focusedContainerColor = colors.fieldContainer,
-                    unfocusedContainerColor = colors.fieldContainer,
-                    errorBorderColor = colors.error,
-                    errorLabelColor = colors.error
+                    focusedContainerColor = palette.fieldContainer,
+                    unfocusedContainerColor = palette.fieldContainer,
+                    focusedTextColor = palette.fieldText,
+                    unfocusedTextColor = palette.fieldText,
+                    focusedBorderColor = palette.fieldBorder,
+                    unfocusedBorderColor = palette.fieldBorder,
+                    cursorColor = palette.fieldText
                 )
             )
 
-            if (!ui.error.isNullOrBlank()) {
-                Spacer(Modifier.height(10.dp))
-                Text(ui.error ?: "", color = colors.error, style = MaterialTheme.typography.bodyMedium)
+            if (generalError != null) {
+                Spacer(Modifier.height(8.dp))
+                Text(generalError!!, color = palette.error)
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(16.dp))
 
             Button(
                 onClick = {
-                    // Usamos la versión de submit que entrega el username (correo).
-                    viewModel.submit { email ->
+                    val emailOk =
+                        android.util.Patterns.EMAIL_ADDRESS.matcher(email.trim()).matches()
+                    val passOk = pass.length >= 8
+                    emailError = if (!emailOk) "Correo inválido" else null
+                    passError = if (!passOk) "Mínimo 8 caracteres" else null
+
+                    if (emailOk && passOk) {
+                        isLoading = true
                         scope.launch {
-                            // Guarda el correo en DataStore para que Profile lo lea
-                            SessionManager(context).setEmail(email)
-                            // Delega la navegación al contenedor (MainActivity/NavHost)
-                            onLoginSuccess()
+                            val correo = email.trim()
+                            val desdeRegistro = repo.login(correo, pass)
+
+                            val predefinidos =
+                                (correo == "cliente@huerto.cl" && pass == "Huerto2025!") ||
+                                        (correo == "admin@huerto.cl" && pass == "Admin2025!")
+
+                            val ok = desdeRegistro || predefinidos
+
+                            isLoading = false
+                            if (ok) {
+                                // Guardamos correo de usuario logueado
+                                sessionManager.setEmail(correo)
+                                onLoginSuccess()
+                            } else {
+                                generalError = "Credenciales inválidas"
+                            }
                         }
                     }
                 },
-                enabled = !ui.isLoading,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(28.dp),
+                enabled = !isLoading,
+                modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.buttonContainer,
-                    contentColor = colors.buttonContent,
-                    disabledContainerColor = colors.buttonContainer.copy(alpha = 0.4f),
-                    disabledContentColor = colors.buttonContent.copy(alpha = 0.8f)
+                    containerColor = palette.buttonContainer,
+                    contentColor = palette.buttonContent
                 )
             ) {
-                Text(if (ui.isLoading) "Ingresando..." else "Ingresar")
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        Modifier.size(20.dp),
+                        color = palette.buttonContent,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Ingresar")
+                }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(8.dp))
+
+            TextButton(
+                onClick = { onGoToRegister() },
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text("Crear cuenta")
+            }
         }
     }
 }

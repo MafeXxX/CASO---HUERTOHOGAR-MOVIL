@@ -1,7 +1,11 @@
 package com.example.proyectologin005d.ui.home
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -14,6 +18,7 @@ import androidx.compose.ui.unit.dp
 fun HomeScreen(
     onGoToCatalog: () -> Unit = {},
     onGoToProfile: () -> Unit = {},   // <- NUEVO
+    onGoToCart: () -> Unit,
     onLogout: () -> Unit = {}
 ) {
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -35,6 +40,15 @@ fun HomeScreen(
 
             Button(onClick = onGoToProfile, modifier = Modifier.fillMaxWidth()) {
                 Text("Mi Perfil")
+            }
+
+            Spacer(Modifier.height(12.dp))
+
+            Button(
+                onClick = onGoToCart,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Mi Carrito")
             }
 
             Spacer(Modifier.height(12.dp))

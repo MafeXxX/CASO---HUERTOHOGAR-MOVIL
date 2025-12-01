@@ -7,19 +7,20 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
-// ===== Pantallas (asegúrate de que existan en estas rutas) =====
-import com.example.proyectologin005d.ui.login.LoginScreen
+// ===== Pantallas =====
+import com.example.proyectologin005d.login.LoginScreen
+import com.example.proyectologin005d.login.RegisterScreen
 import com.example.proyectologin005d.ui.splash.LoadingAppleScreen
-
-// Si ya tienes HomeScreen y NO un HomeMenuScreen, este alias evita renombrar archivos.
 import com.example.proyectologin005d.ui.home.HomeScreen as HomeMenuScreen
 // Si de verdad tienes HomeMenuScreen.kt, cambia la línea de arriba por:
 // import com.example.proyectologin005d.ui.home.HomeMenuScreen
 
 object Routes {
     const val LOGIN = "login"
+    const val REGISTER = "register"
     const val LOADING = "loading"
     const val HOME = "home"
+    const val CART = "carrito"
 }
 
 @Composable
@@ -30,17 +31,31 @@ fun AppNav(
         navController = navController,
         startDestination = Routes.LOGIN
     ) {
+        // LOGIN
         composable(Routes.LOGIN) {
             LoginScreen(
                 onLoginSuccess = {
                     navController.navigate(Routes.LOADING) {
                         popUpTo(Routes.LOGIN) { inclusive = true }
                     }
+                },
+                onGoToRegister = {
+                    navController.navigate(Routes.REGISTER)
                 }
             )
         }
 
-        // Pantalla de manzana girando 6s
+        // REGISTER
+        composable(Routes.REGISTER) {
+            RegisterScreen(
+                onBackToLogin = {
+                    // Vuelve a la pantalla anterior (login)
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // PANTALLA DE CARGA (MANZANA GIRANDO)
         composable(Routes.LOADING) {
             LoadingAppleScreen(
                 onFinished = {
@@ -51,6 +66,7 @@ fun AppNav(
             )
         }
 
+        // HOME
         composable(Routes.HOME) {
             HomeMenuScreen(
                 onGoToCatalog = { /* navController.navigate("catalog") si la tienes */ },
@@ -59,7 +75,8 @@ fun AppNav(
                         popUpTo(Routes.HOME) { inclusive = true }
                     }
                 },
-                onGoToProfile = { /* navController.navigate("profile") si la tienes */ }
+                onGoToProfile = { /* navController.navigate("profile") si la tienes */ },
+                onGoToCart = { navController.navigate(Routes.CART) }
             )
         }
     }

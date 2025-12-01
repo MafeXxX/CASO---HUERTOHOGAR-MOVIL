@@ -138,10 +138,7 @@ fun CarritoScreen(
                                         "${formatoCLP(item.producto.precio)} × ${item.cantidad} unidades",
                                         style = MaterialTheme.typography.bodyMedium
                                     )
-                                    //Text( /*formato precio total producto unico, recordar sacar*/
-                                    //    formatoCLP(item.producto.precio * item.cantidad),
-                                    //    style = MaterialTheme.typography.bodyMedium
-                                    //)
+
 
                                 }
 

@@ -39,6 +39,11 @@ android {
     composeOptions { kotlinCompilerExtensionVersion = "1.5.15" }
 }
 
+
+
+
+
+
 dependencies {
 
 
@@ -112,7 +117,12 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    testImplementation("junit:junit:4.13.2")
+
 }
+
+
 
 tasks.withType<Test> {
     useJUnitPlatform() // <<< NECESARIO

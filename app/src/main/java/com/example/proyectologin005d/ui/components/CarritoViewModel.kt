@@ -1,8 +1,10 @@
 package com.example.proyectologin005d.ui.components
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.proyectologin005d.data.model.Producto
+import com.example.proyectologin005d.data.repository.CompraRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,17 +12,21 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-
 // EL VIEWMODEL DEL carrito
 data class ItemCarrito(
     val producto: Producto,
     val cantidad: Int
 )
 
-class CarritoViewModel : ViewModel() {
+class CarritoViewModel(
+    application: Application
+) : AndroidViewModel(application) {
+
+    // Repositorio para registrar compras en la BDD
+    private val compraRepository = CompraRepository(application)
 
     private val _cart = MutableStateFlow<List<ItemCarrito>>(emptyList())
-    val cart: StateFlow<List<ItemCarrito>> = _cart
+    val cart: StateFlow<List<ItemCarrito>> = _cart.asStateFlow()
 
     private val _events = MutableSharedFlow<String>()
     val events = _events.asSharedFlow()
@@ -65,7 +71,7 @@ class CarritoViewModel : ViewModel() {
         val items = _cart.value.toMutableList()
         val index = items.indexOfFirst { it.producto.id == producto.id }
 
-        if (index < 0) return   // no debería pasar, pero por seguridad
+        if (index < 0) return
 
         val current = items[index]
 
@@ -97,9 +103,8 @@ class CarritoViewModel : ViewModel() {
             items[index] = current.copy(cantidad = current.cantidad - 1)
         }
 
-        // DEVUELVE STOCK
-        //chiste interno, se aumenta y devuelve el doble
-        producto.stock += 0 
+        // chiste interno: no tocamos el stock realmente
+        producto.stock += 0
 
         _cart.value = items
     }
@@ -108,7 +113,7 @@ class CarritoViewModel : ViewModel() {
     // ELIMINAR TODO EL CARRITO
     // ---------------------------------------------------------------------
     fun clearCart() {
-        val cartSnapshot = _cart.value.toList() // copia segura del carrito
+        val cartSnapshot = _cart.value.toList()
 
         val updatedProducts = _products.value.map { product ->
             val cartItem = cartSnapshot.find { it.producto.id == product.id }
@@ -122,7 +127,6 @@ class CarritoViewModel : ViewModel() {
         _products.value = updatedProducts
         _cart.value = emptyList()
     }
-
 
     // ---------------------------------------------------------------------
     // TOTAL A PAGAR
@@ -141,30 +145,36 @@ class CarritoViewModel : ViewModel() {
     }
 
     // ---------------------------------------------------------------------
-    // COMPRAR
+    // COMPRAR → GUARDA EN LA BDD CON EL USUARIO
     // ---------------------------------------------------------------------
-    fun comprar() {
+    fun comprar(userEmail: String) {
         viewModelScope.launch {
             if (_cart.value.isEmpty()) {
                 _events.emit("El carrito está vacío")
                 return@launch
             }
 
-            // Restar stock directamente en el producto
-            _cart.value.forEach { item ->
+            val items = _cart.value
+            val total = items.sumOf { it.producto.precio * it.cantidad }
+            val cantidadProductos = items.sumOf { it.cantidad }
+
+            // 1) Registrar la compra en la base de datos
+            compraRepository.registrarCompra(
+                userEmail = userEmail,
+                total = total,
+                cantidadProductos = cantidadProductos
+            )
+
+            // 2) Restar stock en los productos (si quieres)
+            items.forEach { item ->
                 item.producto.stock -= item.cantidad
             }
 
-            // Vaciar el carrito
+            // 3) Vaciar el carrito
             _cart.value = emptyList()
 
-            _events.emit("Compra realizada con éxito!")
+            // 4) Avisar a la UI
+            _events.emit("Compra realizada y guardada en la BDD")
         }
     }
-
-
 }
-
-
-
-

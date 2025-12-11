@@ -6,11 +6,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.proyectologin005d.data.SessionManager
 import com.example.proyectologin005d.login.LoginScreen
 import com.example.proyectologin005d.login.RegisterScreen
 import com.example.proyectologin005d.ui.components.CarritoScreen
@@ -23,7 +27,6 @@ import com.example.proyectologin005d.ui.screens.CatalogScreen
 import com.example.proyectologin005d.ui.splash.LoadingAppleScreen   // manzana girando
 import com.example.proyectologin005d.ui.splash.LoadingPurchaseScreen
 
-
 class MainActivity : ComponentActivity() {
     @SuppressLint("ContextCastToActivity")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,8 +34,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             Surface(color = MaterialTheme.colorScheme.background) {
                 val nav = rememberNavController()
-                //algo nuevo añadido del carrito
-                val carritoVM: CarritoViewModel = viewModel(LocalContext.current as ComponentActivity)
+
+                // ViewModel del carrito compartido en toda la app
+                val carritoVM: CarritoViewModel =
+                    viewModel(LocalContext.current as ComponentActivity)
 
                 NavHost(navController = nav, startDestination = "login") {
 
@@ -85,10 +90,7 @@ class MainActivity : ComponentActivity() {
                         )
                     }
 
-
-
                     // ===== CATÁLOGO =====
-                    //catalogo modificado
                     composable("catalog") {
                         CatalogScreen(
                             onProductClick = { id ->
@@ -96,7 +98,8 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     }
-                    // detalle del producto
+
+                    // ===== DETALLE DEL PRODUCTO =====
                     composable("detail/{id}") { back ->
                         val id = back.arguments?.getString("id")!!
 
@@ -107,15 +110,26 @@ class MainActivity : ComponentActivity() {
                             onBack = { nav.popBackStack() }
                         )
                     }
-                    // carrito
+
+                    // ===== CARRITO =====
                     composable("carrito") {
+
+                        // Obtenemos el email del usuario desde SessionManager
+                        val context = LocalContext.current
+                        val sessionManager = remember { SessionManager(context) }
+                        val userEmail by sessionManager.emailFlow.collectAsState(initial = null)
+
                         CarritoScreen(
                             carritoViewModel = carritoVM,
+                            userEmail = userEmail ?: "",   // 👈 se pasa al CarritoScreen
                             onBack = { nav.popBackStack() },
-                            onBuyClick = { nav.navigate("cargando") }   // <-- AQUÍ NAVEGA A LA PANTALLA DE CARGA
+                            onBuyClick = {
+                                nav.navigate("cargando")   // pantalla de carga
+                            }
                         )
                     }
-                    // pantalla de carga al realizar la accion de comprar
+
+                    // ===== PANTALLA DE CARGA AL COMPRAR =====
                     composable("cargando") {
                         LoadingPurchaseScreen(
                             onFinished = {
@@ -125,10 +139,14 @@ class MainActivity : ComponentActivity() {
                             }
                         )
                     }
-                    // apartado compra realizada
+
+                    // ===== APARTADO COMPRA REALIZADA =====
                     composable("compraRealizada") {
 
-                        val carritoViewModel: CarritoViewModel = viewModel()
+                        // Reutilizamos el mismo SessionManager y email
+                        val context = LocalContext.current
+                        val sessionManager = remember { SessionManager(context) }
+                        val userEmail by sessionManager.emailFlow.collectAsState(initial = null)
 
                         PurchaseSuccessScreen(
                             onContinue = {
@@ -137,11 +155,12 @@ class MainActivity : ComponentActivity() {
                                 }
                             },
                             onBuy = {
-                                carritoViewModel.comprar()   // <-- AQUÍ LLAMAS A LA FUNCIÓN COMPRAR
+                                // Si el usuario quiere comprar otra vez desde aquí,
+                                // también registramos la compra en la BDD con su email
+                                carritoVM.comprar(userEmail ?: "")
                             }
                         )
                     }
-
 
                     // ===== PERFIL =====
                     composable("profile") {

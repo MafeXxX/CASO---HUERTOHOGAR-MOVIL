@@ -25,6 +25,9 @@ class SessionManager(private val context: Context) {
         prefs[KEY_EMAIL]
     }
 
+    // Alias cómodo por si en Compose quieres usar sessionManager.getEmail
+    val getEmail: Flow<String?> get() = emailFlow
+
     suspend fun setEmail(email: String) {
         context.dataStore.edit { prefs ->
             prefs[KEY_EMAIL] = email
@@ -41,6 +44,9 @@ class SessionManager(private val context: Context) {
     val photoUriFlow: Flow<String?> = context.dataStore.data.map { prefs ->
         prefs[KEY_PHOTO_URI]
     }
+
+    // Alias similar al de email
+    val getPhotoUri: Flow<String?> get() = photoUriFlow
 
     suspend fun setPhotoUri(uri: String) {
         context.dataStore.edit { prefs ->

@@ -43,6 +43,7 @@ import com.example.proyectologin005d.ui.splash.LoadingPurchaseScreen
 @Composable
 fun CarritoScreen(
     carritoViewModel: CarritoViewModel,
+    userEmail: String,          // 👈 correo del usuario que compra
     onBack: () -> Unit,
     onBuyClick: () -> Unit
 ) {
@@ -66,7 +67,8 @@ fun CarritoScreen(
         showLoading -> {
             LoadingPurchaseScreen(
                 onFinished = {
-                    carritoViewModel.comprar()
+                    // Cuando termina la animación de compra, registramos la compra en la BDD
+                    carritoViewModel.comprar(userEmail)
                     showLoading = false
                     showSuccess = true
                 }
@@ -76,17 +78,17 @@ fun CarritoScreen(
         showSuccess -> {
             PurchaseSuccessScreen(
                 onContinue = {
-
                     showSuccess = false
                 },
                 onBuy = {
-                    carritoViewModel.comprar()   // o lo que quieras ejecutar
+                    // Si vuelve a comprar desde esta pantalla, también se registra en la BDD
+                    carritoViewModel.comprar(userEmail)
                 }
             )
         }
 
         else -> {
-            Scaffold (
+            Scaffold(
                 snackbarHost = { SnackbarHost(snackbarHostState) }
             ) { padding ->
 
@@ -102,7 +104,10 @@ fun CarritoScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Volver"
+                            )
                         }
                         Text("Mi carrito", style = MaterialTheme.typography.titleLarge)
                     }
@@ -133,23 +138,25 @@ fun CarritoScreen(
                                 Column(
                                     modifier = Modifier.weight(1f)
                                 ) {
-                                    Text(item.producto.nombre, style = MaterialTheme.typography.titleMedium)
+                                    Text(
+                                        item.producto.nombre,
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
                                     Text(
                                         "${formatoCLP(item.producto.precio)} × ${item.cantidad} unidades",
                                         style = MaterialTheme.typography.bodyMedium
                                     )
-
-
                                 }
-
-
 
                                 Row(verticalAlignment = Alignment.CenterVertically) {
 
                                     IconButton(onClick = {
                                         carritoViewModel.decreaseQuantity(item.producto)
                                     }) {
-                                        Icon(Icons.Default.Remove, contentDescription = "Restar")
+                                        Icon(
+                                            Icons.Default.Remove,
+                                            contentDescription = "Restar"
+                                        )
                                     }
 
                                     Text(
@@ -161,7 +168,10 @@ fun CarritoScreen(
                                     IconButton(onClick = {
                                         carritoViewModel.increaseQuantity(item.producto)
                                     }) {
-                                        Icon(Icons.Default.Add, contentDescription = "Sumar")
+                                        Icon(
+                                            Icons.Default.Add,
+                                            contentDescription = "Sumar"
+                                        )
                                     }
                                 }
                             }
@@ -184,6 +194,7 @@ fun CarritoScreen(
 
                         Button(
                             onClick = {
+                                // Lanza la animación de compra y cualquier navegación extra
                                 showLoading = true
                                 onBuyClick()
                             },
@@ -197,8 +208,3 @@ fun CarritoScreen(
         }
     }
 }
-
-
-
-
-

@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.example.proyectologin005d.R
 import com.example.proyectologin005d.data.SessionManager
 import com.example.proyectologin005d.data.UserRepository
+import com.example.proyectologin005d.data.repository.ComentarioRepository
 import com.example.proyectologin005d.ui.login.LoginColors
 import com.example.proyectologin005d.ui.login.LoginDefaults
 import kotlinx.coroutines.launch
@@ -33,10 +34,12 @@ fun LoginScreen(
     val context = LocalContext.current
     val repo = remember { UserRepository(context) }
     val sessionManager = remember { SessionManager(context) }
+    val comentarioRepository = remember { ComentarioRepository(context) }
     val scope = rememberCoroutineScope()
 
     var email by remember { mutableStateOf("") }
     var pass by remember { mutableStateOf("") }
+    var comentario by remember { mutableStateOf("") }
     var emailError by remember { mutableStateOf<String?>(null) }
     var passError by remember { mutableStateOf<String?>(null) }
     var generalError by remember { mutableStateOf<String?>(null) }
@@ -148,6 +151,29 @@ fun LoginScreen(
                 )
             )
 
+            Spacer(Modifier.height(8.dp))
+
+            // 🔹 Campo de comentario (opcional), se guarda en la BDD local
+            OutlinedTextField(
+                value = comentario,
+                onValueChange = { comentario = it },
+                label = { Text("Comentario (opcional)", color = palette.fieldLabel) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 80.dp),
+                maxLines = 4,
+                singleLine = false,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = palette.fieldContainer,
+                    unfocusedContainerColor = palette.fieldContainer,
+                    focusedTextColor = palette.fieldText,
+                    unfocusedTextColor = palette.fieldText,
+                    focusedBorderColor = palette.fieldBorder,
+                    unfocusedBorderColor = palette.fieldBorder,
+                    cursorColor = palette.fieldText
+                )
+            )
+
             if (generalError != null) {
                 Spacer(Modifier.height(8.dp))
                 Text(generalError!!, color = palette.error)
@@ -179,6 +205,15 @@ fun LoginScreen(
                             if (ok) {
                                 // Guardamos correo de usuario logueado
                                 sessionManager.setEmail(correo)
+
+                                // 🔹 Si hay comentario, se guarda en la BDD LOCAL (Room)
+                                if (comentario.isNotBlank()) {
+                                    comentarioRepository.guardarComentario(
+                                        correo = correo,
+                                        texto = comentario.trim()
+                                    )
+                                }
+
                                 onLoginSuccess()
                             } else {
                                 generalError = "Credenciales inválidas"
